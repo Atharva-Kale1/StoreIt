@@ -31,9 +31,12 @@ const authFormSchema = (formType: FormType) => {
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { createAccount } from "@/lib/actions/user.actions";
+import OTPModal from "@/components/OTPModal";
 const AuthForm = ({ type }: { type: FormType }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [accountId, setAccountId] = useState(null);
   // form
   const formSchema = authFormSchema(type);
   const form = useForm<z.infer<typeof formSchema>>({
@@ -46,7 +49,20 @@ const AuthForm = ({ type }: { type: FormType }) => {
 
   // 2. Define a submit handler.
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values);
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const user = await createAccount({
+        email: values.email,
+        fullName: values.fullName || "",
+      });
+
+      setAccountId(user.accountId);
+    } catch {
+      setErrorMessage("failed to create account Please try again");
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <>
@@ -135,6 +151,9 @@ const AuthForm = ({ type }: { type: FormType }) => {
         </form>
       </Form>
       {/*OTP verification*/}
+      {accountId && (
+        <OTPModal email={form.getValues("email")} accountId={accountId} />
+      )}
     </>
   );
 };
