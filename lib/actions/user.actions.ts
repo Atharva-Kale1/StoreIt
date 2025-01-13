@@ -1,10 +1,11 @@
 "use server";
-import { createAdminClient } from "@/lib/appwrite";
+import { createAdminClient, createSessionClient } from "@/lib/appwrite";
 import { appwriteConfig } from "@/lib/appwrite/config";
 import { ID, Query } from "node-appwrite";
 import { parseStringify } from "@/lib/utils";
 import { cookies } from "next/headers";
 import path from "node:path";
+import { avatarPlaceholderUrl } from "@/constants";
 
 const getUserByEmail = async (email: string) => {
   const { databases } = await createAdminClient();
@@ -55,7 +56,7 @@ export const createAccount = async ({
       {
         fullName,
         email,
-        avatar: "/images/avatar.png",
+        avatar: avatarPlaceholderUrl,
         accountId,
       },
     );
@@ -80,8 +81,28 @@ export const verifySecret = async ({
       sameSite: "strict",
       secure: true,
     });
+
     return parseStringify({ sessionId: session.$id });
   } catch (error) {
     handleError(error, "Failed to verify otp");
+  }
+};
+
+export const getCurrentUser = async () => {
+  const { databases, account } = await createSessionClient();
+  try {
+    const result = await account.get(); // Validate session
+
+    const user = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.usersCollectionId,
+      [Query.equal("accountId", result.$id)],
+    );
+
+    if (user.total <= 0) return null;
+    return parseStringify(user.documents[0]);
+  } catch (error) {
+    console.error("Session validation failed:", error);
+    return null; // Return null if session validation fails
   }
 };
