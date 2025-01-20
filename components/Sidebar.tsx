@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { avatarPlaceholderUrl, navItems } from "@/constants";
+import { navItems } from "@/constants";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -66,7 +66,7 @@ const Sidebar = ({ fullName, avatar, email }: Props) => {
       />
       <div className={"sidebar-user-info"}>
         <Image
-          src={avatarPlaceholderUrl}
+          src={avatar}
           alt="Avatar"
           width={44}
           height={44}
